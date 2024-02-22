@@ -110,8 +110,8 @@ if(NOT DEFINED CARGO_SOURCE_DIR)
 endif()
 
 add_custom_command(OUTPUT ${rust_generated_project}/Cargo.toml
-  COMMAND ${rust_src_dir}/genproject.sh ${CARGO_SOURCE_DIR} ${rust_generated_project}
-  DEPENDS ${rust_src_dir}/genproject.sh
+  COMMAND ${PYTHON_EXECUTABLE} ${rust_src_dir}/genproject.py ${CARGO_SOURCE_DIR} ${rust_generated_project}
+  DEPENDS ${rust_src_dir}/genproject.py
 )
 add_custom_target(rust_generated_project DEPENDS ${rust_generated_project}/Cargo.toml)
 
@@ -149,7 +149,8 @@ if (CONFIG_RUST)
             "RUST_TARGET=${rust_target}"
             "RUST_TARGET_SPEC=${rust_src_dir}/${rust_target}.json"
             "CARGO_MANIFEST=${rust_generated_project}/Cargo.toml"
-            ./build.sh
+            ${PYTHON_EXECUTABLE} ./build.py
+            #./build.sh
         INSTALL_COMMAND ""
         BUILD_BYPRODUCTS ${rust_staticlib}
     )
