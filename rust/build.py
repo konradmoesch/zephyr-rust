@@ -10,6 +10,13 @@ def get_rustc_version():
         if line.startswith('release:'):
             return line.split()[1].split('.')[0:2]
 
+def get_host():
+    result = subprocess.run(['rustc', '-vV'], capture_output=True, text=True)
+    lines = result.stdout.split('\n')
+    for line in lines:
+        if line.startswith('host:'):
+            return line.split()[1]
+
 def publish_sysroot(clean_dir_if_changed, sysroot, host, target, *sources):
     print("publish sysroot")
 
@@ -26,9 +33,13 @@ def publish_sysroot(clean_dir_if_changed, sysroot, host, target, *sources):
     print(sources)
 
     for src in sources:
+        print(os.path.join(src, 'release', 'deps', '.'))
+        print(os.listdir(os.path.join(src, 'release', 'deps', '.')))
         subprocess.run(['cp', '-a', os.path.join(src, target, 'release', 'deps', '.'), sysroot_lib_new], check=True)
         subprocess.run(['cp', '-a', os.path.join(src, 'release', 'deps', '.'), sysroot_lib_host_new], check=True)
     print("cp done")
+
+    print(os.listdir(sysroot_lib_host_new))
 
     diff_result_lib = subprocess.run(['diff', '-qr', sysroot_lib, sysroot_lib_new], capture_output=True, text=True)
     diff_result_lib_host = subprocess.run(['diff', '-qr', sysroot_lib_host, sysroot_lib_host_new], capture_output=True, text=True)
@@ -63,7 +74,7 @@ def build_std(sysroot_build, app_build, sysroot, rust_target_spec, cargo_manifes
     print(sysroot_build + '-stage1')
     subprocess.run(['/home/km/.cargo/bin/cargo'] + cargo_args + [ '--target-dir=' + sysroot_build + '-stage1', '--manifest-path=./sysroot-stage1/Cargo.toml', '-p', 'std'], env = env, check=True)
     print("done with cargo")
-    host = os.environ.get('HOST', '')
+    host = get_host()
     publish_sysroot(app_build, sysroot, host, rust_target, sysroot_build + '-stage1')
 
     os.environ['RUSTFLAGS'] = rust_flags_orig + f' --sysroot {sysroot}'
