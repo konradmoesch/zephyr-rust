@@ -126,6 +126,38 @@ set(external_project_cflags
 if (CONFIG_RUST)
     include(ExternalProject)
 
+    if (WIN32)
+        set(envvar_cmd "SET \"ZEPHYR_BINDGEN=${ZEPHYR_BINDGEN}\" &&  \
+        SET \"ZEPHYR_KERNEL_VERSION_NUM=${KERNEL_VERSION_NUMBER}\" &&
+        SET \"CONFIG_USERSPACE=${CONFIG_USERSPACE}\" &&
+        SET \"CONFIG_RUST_ALLOC_POOL=${CONFIG_RUST_ALLOC_POOL}\" &&
+        SET \"CONFIG_RUST_MUTEX_POOL=${CONFIG_RUST_MUTEX_POOL}\" &&
+        SET \"CONFIG_POSIX_CLOCK=${CONFIG_POSIX_CLOCK}\" &&
+        SET \"TARGET_CFLAGS=${external_project_cflags} --target=${clang_target}\" &&
+        SET \"SYSROOT=${rust_sysroot}\" &&
+        SET \"SYSROOT_BUILD=${rust_sysroot_build}\" &&
+        SET \"APP_BUILD=${rust_app_build}\" &&
+        SET \"RUST_TARGET=${rust_target}\" &&
+        SET \"RUST_TARGET_SPEC=${rust_src_dir}/${rust_target}.json\" &&
+        SET \"CARGO_MANIFEST=${rust_generated_project}/Cargo.toml\" && ")
+    endif (WIN32)
+    if (UNIX)
+        set(envvar_cmd "env
+        \"ZEPHYR_BINDGEN=${ZEPHYR_BINDGEN}\"
+        \"ZEPHYR_KERNEL_VERSION_NUM=${KERNEL_VERSION_NUMBER}\"
+        \"CONFIG_USERSPACE=${CONFIG_USERSPACE}\"
+        \"CONFIG_RUST_ALLOC_POOL=${CONFIG_RUST_ALLOC_POOL}\"
+        \"CONFIG_RUST_MUTEX_POOL=${CONFIG_RUST_MUTEX_POOL}\"
+        \"CONFIG_POSIX_CLOCK=${CONFIG_POSIX_CLOCK}\"
+        \"TARGET_CFLAGS=${external_project_cflags} --target=${clang_target}\"
+        \"SYSROOT=${rust_sysroot}\"
+        \"SYSROOT_BUILD=${rust_sysroot_build}\"
+        \"APP_BUILD=${rust_app_build}\"
+        \"RUST_TARGET=${rust_target}\"
+        \"RUST_TARGET_SPEC=${rust_src_dir}/${rust_target}.json\"
+        \"CARGO_MANIFEST=${rust_generated_project}/Cargo.toml\"")
+    endif (UNIX)
+
     ExternalProject_Add(
         rust_project
         PREFIX     ${CMAKE_CURRENT_BINARY_DIR}
@@ -135,22 +167,20 @@ if (CONFIG_RUST)
         DEPENDS syscall_thunks_target ${zephyr_bindgen_target} rust_generated_project
         CONFIGURE_COMMAND ""
         BUILD_COMMAND
-            env
-            "ZEPHYR_BINDGEN=${ZEPHYR_BINDGEN}"
-            "ZEPHYR_KERNEL_VERSION_NUM=${KERNEL_VERSION_NUMBER}"
-            "CONFIG_USERSPACE=${CONFIG_USERSPACE}"
-            "CONFIG_RUST_ALLOC_POOL=${CONFIG_RUST_ALLOC_POOL}"
-            "CONFIG_RUST_MUTEX_POOL=${CONFIG_RUST_MUTEX_POOL}"
-            "CONFIG_POSIX_CLOCK=${CONFIG_POSIX_CLOCK}"
-            "TARGET_CFLAGS=${external_project_cflags} --target=${clang_target}"
-            "SYSROOT=${rust_sysroot}"
-            "SYSROOT_BUILD=${rust_sysroot_build}"
-            "APP_BUILD=${rust_app_build}"
-            "RUST_TARGET=${rust_target}"
-            "RUST_TARGET_SPEC=${rust_src_dir}/${rust_target}.json"
-            "CARGO_MANIFEST=${rust_generated_project}/Cargo.toml"
+            SET "ZEPHYR_BINDGEN=${ZEPHYR_BINDGEN}" && 
+            SET "ZEPHYR_KERNEL_VERSION_NUM=${KERNEL_VERSION_NUMBER}" &&
+            SET "CONFIG_USERSPACE=${CONFIG_USERSPACE}" &&
+            SET "CONFIG_RUST_ALLOC_POOL=${CONFIG_RUST_ALLOC_POOL}" &&
+            SET "CONFIG_RUST_MUTEX_POOL=${CONFIG_RUST_MUTEX_POOL}" &&
+            SET "CONFIG_POSIX_CLOCK=${CONFIG_POSIX_CLOCK}" &&
+            SET "TARGET_CFLAGS=${external_project_cflags} --target=${clang_target}" &&
+            SET "SYSROOT=${rust_sysroot}" &&
+            SET "SYSROOT_BUILD=${rust_sysroot_build}" &&
+            SET "APP_BUILD=${rust_app_build}" &&
+            SET "RUST_TARGET=${rust_target}" &&
+            SET "RUST_TARGET_SPEC=${rust_src_dir}/${rust_target}.json" &&
+            SET "CARGO_MANIFEST=${rust_generated_project}/Cargo.toml" && 
             ${PYTHON_EXECUTABLE} ./build.py
-            #./build.sh
         INSTALL_COMMAND ""
         BUILD_BYPRODUCTS ${rust_staticlib}
     )
